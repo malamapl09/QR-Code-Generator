@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { QRGenerator } from "@/components/qr/qr-generator";
+import { AdBanner } from "@/components/ads/ad-banner";
 
 export default function HomePage() {
   return (
@@ -18,6 +19,9 @@ export default function HomePage() {
           </div>
 
           <QRGenerator />
+
+          {/* Ad Banner - Only shown to non-authenticated users */}
+          <AdBanner className="my-8" />
 
           {/* Features Section */}
           <section className="mt-16 grid gap-8 md:grid-cols-3">
