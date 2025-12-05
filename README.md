@@ -30,6 +30,14 @@ A modern, full-featured QR code generator web application built with Next.js 16,
   - Time-series charts
 - Manage all your QR codes from a dashboard
 
+### SEO & Marketing
+- Dynamic OpenGraph and Twitter card images
+- Structured data (JSON-LD) for rich search snippets
+- Auto-generated sitemap.xml and robots.txt
+- Page-specific metadata optimization
+- Google Analytics integration
+- Google AdSense integration (non-intrusive, hidden for logged-in users)
+
 ## Tech Stack
 
 | Component | Technology |
@@ -43,6 +51,8 @@ A modern, full-featured QR code generator web application built with Next.js 16,
 | QR Generation | qrcode (npm) |
 | Charts | Recharts |
 | Forms | React Hook Form + Zod |
+| Analytics | Google Analytics (@next/third-parties) |
+| Monetization | Google AdSense |
 
 ## Getting Started
 
@@ -76,12 +86,17 @@ Copy the example environment file:
 cp .env.example .env.local
 ```
 
-Update `.env.local` with your Supabase credentials:
+Update `.env.local` with your credentials:
 ```env
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Analytics & Ads (optional)
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_ADSENSE_ID=ca-pub-XXXXXXXXXX
 ```
 
 Find these values in your Supabase dashboard under **Settings > API**.
@@ -109,12 +124,16 @@ qr-code-generator/
 │   ├── layout.tsx              # Root layout with providers
 │   ├── page.tsx                # Home page - QR Generator
 │   ├── not-found.tsx           # 404 page
+│   ├── robots.ts               # SEO: robots.txt generation
+│   ├── sitemap.ts              # SEO: sitemap.xml generation
+│   ├── opengraph-image.tsx     # SEO: Dynamic OG image
+│   ├── twitter-image.tsx       # SEO: Twitter card image
 │   ├── (auth)/
 │   │   ├── login/page.tsx      # Login page
 │   │   ├── signup/page.tsx     # Signup page
 │   │   └── callback/route.ts   # Auth callback handler
 │   ├── dashboard/
-│   │   ├── layout.tsx          # Dashboard layout
+│   │   ├── layout.tsx          # Dashboard layout (noindex)
 │   │   ├── page.tsx            # QR codes list
 │   │   └── [id]/page.tsx       # QR detail + analytics
 │   ├── pricing/page.tsx        # Pricing tiers
@@ -135,6 +154,10 @@ qr-code-generator/
 │   │   ├── stats-overview.tsx  # Summary cards
 │   │   ├── scans-chart.tsx     # Time-series chart
 │   │   └── device-breakdown.tsx # Device pie chart
+│   ├── seo/
+│   │   └── json-ld.tsx         # Structured data components
+│   ├── ads/
+│   │   └── ad-banner.tsx       # AdSense banner (auth-aware)
 │   └── auth/
 │       ├── auth-provider.tsx   # Auth context
 │       ├── login-form.tsx
@@ -192,6 +215,10 @@ qr-code-generator/
 |-------|--------|-------------|
 | `/q/[shortcode]` | GET | Dynamic QR redirect with analytics (Edge Runtime) |
 | `/callback` | GET | Supabase auth callback handler |
+| `/sitemap.xml` | GET | Auto-generated sitemap for SEO |
+| `/robots.txt` | GET | Crawler directives |
+| `/opengraph-image` | GET | Dynamic OG image (Edge Runtime) |
+| `/twitter-image` | GET | Dynamic Twitter card image (Edge Runtime) |
 
 ## Deployment
 
@@ -205,10 +232,15 @@ qr-code-generator/
 ### Environment Variables for Production
 
 ```env
+# Required
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 NEXT_PUBLIC_APP_URL=https://your-domain.com
+
+# Optional - Analytics & Monetization
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_ADSENSE_ID=ca-pub-XXXXXXXXXX
 ```
 
 ## Pricing Tiers (Suggested)
