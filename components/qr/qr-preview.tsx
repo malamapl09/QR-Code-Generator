@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { generateQRCode } from "@/lib/qr/generator";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +24,8 @@ export function QRPreview({
 }: QRPreviewProps) {
   const [qrCode, setQrCode] = useState<GeneratedQR | null>(null);
   const [loading, setLoading] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+  const prevQrRef = useRef<string | null>(null);
 
   // Debounce the content to avoid regenerating on every keystroke
   const debouncedContent = useDebounce(content, 300);
@@ -34,6 +36,7 @@ export function QRPreview({
     if (!debouncedContent) {
       setQrCode(null);
       onGenerated?.(null);
+      prevQrRef.current = null;
       return;
     }
 
@@ -46,6 +49,14 @@ export function QRPreview({
           foregroundColor: debouncedFg,
           backgroundColor: debouncedBg,
         });
+
+        // Trigger animation only when QR content changes (not just colors)
+        if (prevQrRef.current !== debouncedContent) {
+          setShouldAnimate(true);
+          setTimeout(() => setShouldAnimate(false), 300);
+        }
+        prevQrRef.current = debouncedContent;
+
         setQrCode(result);
         onGenerated?.(result);
       } catch (error) {
@@ -60,24 +71,35 @@ export function QRPreview({
     generate();
   }, [debouncedContent, debouncedFg, debouncedBg, size, onGenerated]);
 
+  // Display size - larger on desktop, responsive on mobile
+  const displaySize = Math.min(size, 320);
+
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border bg-card p-6">
+    <div className="flex flex-col items-center justify-center rounded-xl bg-white p-6 shadow-inner">
       {loading ? (
-        <Skeleton className="h-64 w-64 rounded-lg" />
-      ) : qrCode ? (
-        <img
-          src={qrCode.png}
-          alt="Generated QR Code"
-          className="max-w-full rounded-lg"
-          style={{
-            width: Math.min(size, 300),
-            height: Math.min(size, 300),
-          }}
+        <Skeleton
+          className="rounded-xl"
+          style={{ width: displaySize, height: displaySize }}
         />
+      ) : qrCode ? (
+        <div className={shouldAnimate ? "animate-fade-in" : ""}>
+          <img
+            src={qrCode.png}
+            alt="Generated QR Code"
+            className="rounded-lg transition-all duration-300"
+            style={{
+              width: displaySize,
+              height: displaySize,
+            }}
+          />
+        </div>
       ) : (
-        <div className="flex h-64 w-64 flex-col items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground">
-          <QrCode className="mb-4 h-16 w-16 opacity-50" />
-          <p className="text-center text-sm">
+        <div
+          className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/25 bg-muted/20 text-muted-foreground transition-all duration-300"
+          style={{ width: displaySize, height: displaySize }}
+        >
+          <QrCode className="mb-4 h-16 w-16 opacity-30" />
+          <p className="text-center text-sm font-medium opacity-60">
             Fill in the form to generate
             <br />
             your QR code

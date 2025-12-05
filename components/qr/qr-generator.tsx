@@ -160,87 +160,99 @@ export function QRGenerator() {
 
   return (
     <>
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Left side - Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Create QR Code</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs
-              value={activeType}
-              onValueChange={(v) => setActiveType(v as QRType)}
-            >
-              <TabsList className="mb-6 grid w-full grid-cols-4 lg:grid-cols-7">
-                {QR_TYPES.map((type) => (
-                  <TabsTrigger
-                    key={type.value}
-                    value={type.value}
-                    className="flex items-center gap-1 text-xs sm:text-sm"
-                  >
-                    <type.icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{type.label}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+      {/* Main container with new layout: Preview LEFT, Form RIGHT on desktop */}
+      <Card className="overflow-hidden rounded-xl border-0 shadow-lg transition-shadow duration-300 hover:shadow-xl">
+        <div className="grid gap-0 lg:grid-cols-[380px_1fr]">
+          {/* Left side - QR Preview (desktop) / Top (mobile) */}
+          <div className="order-2 flex flex-col bg-muted/30 p-6 lg:order-1 lg:p-8">
+            <QRPreview
+              content={encodedContent}
+              foregroundColor={foregroundColor}
+              backgroundColor={backgroundColor}
+              size={size}
+              onGenerated={handleQRGenerated}
+            />
 
-              <TabsContent value="url">
-                <URLForm onChange={handleFormChange("url")} />
-              </TabsContent>
-              <TabsContent value="text">
-                <TextForm onChange={handleFormChange("text")} />
-              </TabsContent>
-              <TabsContent value="wifi">
-                <WiFiForm onChange={handleFormChange("wifi")} />
-              </TabsContent>
-              <TabsContent value="vcard">
-                <VCardForm onChange={handleFormChange("vcard")} />
-              </TabsContent>
-              <TabsContent value="email">
-                <EmailForm onChange={handleFormChange("email")} />
-              </TabsContent>
-              <TabsContent value="phone">
-                <PhoneForm onChange={handleFormChange("phone")} />
-              </TabsContent>
-              <TabsContent value="sms">
-                <SMSForm onChange={handleFormChange("sms")} />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+            {/* Download buttons below preview */}
+            <div className="mt-6">
+              <QRDownload
+                qrCode={generatedQR}
+                filename={`${activeType}-qrcode`}
+                onSave={handleSaveClick}
+                showSave={true}
+                disabled={!encodedContent}
+              />
+            </div>
+          </div>
 
-        {/* Right side - Preview & Customization */}
-        <div className="space-y-6">
-          <QRPreview
-            content={encodedContent}
-            foregroundColor={foregroundColor}
-            backgroundColor={backgroundColor}
-            size={size}
-            onGenerated={handleQRGenerated}
-          />
+          {/* Right side - Form & Customization */}
+          <div className="order-1 flex flex-col lg:order-2">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold">Create QR Code</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 space-y-6 pb-6">
+              <Tabs
+                value={activeType}
+                onValueChange={(v) => setActiveType(v as QRType)}
+              >
+                {/* Horizontal scrolling tabs for mobile */}
+                <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
+                  <TabsList className="mb-6 inline-flex h-auto min-w-full gap-1 bg-muted/50 p-1 lg:grid lg:w-full lg:grid-cols-7">
+                    {QR_TYPES.map((type) => (
+                      <TabsTrigger
+                        key={type.value}
+                        value={type.value}
+                        className="flex min-h-[44px] min-w-[72px] flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs transition-all duration-200 data-[state=active]:bg-background data-[state=active]:shadow-sm sm:flex-row sm:gap-2 sm:text-sm lg:min-w-0"
+                      >
+                        <type.icon className="h-4 w-4" />
+                        <span>{type.label}</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
 
-          <QRCustomizer
-            foregroundColor={foregroundColor}
-            backgroundColor={backgroundColor}
-            size={size}
-            onForegroundColorChange={setForegroundColor}
-            onBackgroundColorChange={setBackgroundColor}
-            onSizeChange={setSize}
-          />
+                <div className="min-h-[200px]">
+                  <TabsContent value="url" className="mt-0 animate-fade-in">
+                    <URLForm onChange={handleFormChange("url")} />
+                  </TabsContent>
+                  <TabsContent value="text" className="mt-0 animate-fade-in">
+                    <TextForm onChange={handleFormChange("text")} />
+                  </TabsContent>
+                  <TabsContent value="wifi" className="mt-0 animate-fade-in">
+                    <WiFiForm onChange={handleFormChange("wifi")} />
+                  </TabsContent>
+                  <TabsContent value="vcard" className="mt-0 animate-fade-in">
+                    <VCardForm onChange={handleFormChange("vcard")} />
+                  </TabsContent>
+                  <TabsContent value="email" className="mt-0 animate-fade-in">
+                    <EmailForm onChange={handleFormChange("email")} />
+                  </TabsContent>
+                  <TabsContent value="phone" className="mt-0 animate-fade-in">
+                    <PhoneForm onChange={handleFormChange("phone")} />
+                  </TabsContent>
+                  <TabsContent value="sms" className="mt-0 animate-fade-in">
+                    <SMSForm onChange={handleFormChange("sms")} />
+                  </TabsContent>
+                </div>
+              </Tabs>
 
-          <QRDownload
-            qrCode={generatedQR}
-            filename={`${activeType}-qrcode`}
-            onSave={handleSaveClick}
-            showSave={true}
-            disabled={!encodedContent}
-          />
+              {/* Customization section integrated into form area */}
+              <QRCustomizer
+                foregroundColor={foregroundColor}
+                backgroundColor={backgroundColor}
+                size={size}
+                onForegroundColorChange={setForegroundColor}
+                onBackgroundColorChange={setBackgroundColor}
+                onSizeChange={setSize}
+              />
+            </CardContent>
+          </div>
         </div>
-      </div>
+      </Card>
 
       {/* Save Dialog */}
       <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-xl">
           <DialogHeader>
             <DialogTitle>Save QR Code</DialogTitle>
             <DialogDescription>
@@ -256,6 +268,7 @@ export function QRGenerator() {
                 placeholder="My QR Code"
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
+                className="h-11"
               />
             </div>
 
@@ -287,10 +300,15 @@ export function QRGenerator() {
               variant="outline"
               onClick={() => setShowSaveDialog(false)}
               disabled={saving}
+              className="transition-all duration-200 hover:-translate-y-0.5"
             >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving}>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            >
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save QR Code
             </Button>
