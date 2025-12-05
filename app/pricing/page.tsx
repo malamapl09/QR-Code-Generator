@@ -1,5 +1,18 @@
+import type { Metadata } from "next";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
+import { FAQJsonLd } from "@/components/seo/json-ld";
+
+export const metadata: Metadata = {
+  title: "Pricing",
+  description:
+    "Choose the perfect QR code plan for your needs. Free static codes for personal use, or upgrade for dynamic QR codes with scan analytics and tracking.",
+  openGraph: {
+    title: "Pricing Plans | QR Code Generator",
+    description:
+      "Compare our QR code plans. Free forever for static codes, or upgrade for dynamic codes with analytics.",
+  },
+};
 import {
   Card,
   CardContent,
@@ -82,6 +95,7 @@ const PLANS = [
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background">
+      <FAQJsonLd />
       <Header />
       <main className="container py-16">
         <div className="mx-auto max-w-5xl text-center">

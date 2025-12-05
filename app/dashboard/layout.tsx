@@ -1,4 +1,18 @@
+import type { Metadata } from "next";
 import { Header } from "@/components/layout/header";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "Manage your QR codes and view analytics",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+};
 
 export default function DashboardLayout({
   children,

@@ -16,10 +16,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://qr-code-generator-malamapl09s-projects.vercel.app";
+
 export const metadata: Metadata = {
-  title: "QR Code Generator - Create Free QR Codes",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Free QR Code Generator - Create & Track QR Codes",
+    template: "%s | QR Code Generator",
+  },
   description:
-    "Generate free QR codes for URLs, WiFi, vCards, and more. Create dynamic QR codes with scan analytics and tracking.",
+    "Generate free QR codes for URLs, WiFi, contacts, email, phone & more. Customize colors, download PNG/SVG, and track scans with detailed analytics.",
   keywords: [
     "QR code generator",
     "free QR code",
@@ -27,7 +33,38 @@ export const metadata: Metadata = {
     "QR code analytics",
     "WiFi QR code",
     "vCard QR code",
+    "QR code maker",
+    "create QR code online",
+    "QR code tracking",
   ],
+  authors: [{ name: "QR Code Generator" }],
+  creator: "QR Code Generator",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "QR Code Generator",
+    title: "Free QR Code Generator - Create & Track QR Codes",
+    description:
+      "Generate free QR codes for URLs, WiFi, contacts & more. Customize colors, download PNG/SVG, and track scans with analytics.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free QR Code Generator",
+    description:
+      "Generate free QR codes for URLs, WiFi, contacts & more. Track scans with detailed analytics.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({

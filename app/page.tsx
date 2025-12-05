@@ -1,10 +1,16 @@
 import { Header } from "@/components/layout/header";
 import { QRGenerator } from "@/components/qr/qr-generator";
 import { AdBanner } from "@/components/ads/ad-banner";
+import {
+  SoftwareApplicationJsonLd,
+  WebsiteJsonLd,
+} from "@/components/seo/json-ld";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
+      <SoftwareApplicationJsonLd />
+      <WebsiteJsonLd />
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-5xl">
