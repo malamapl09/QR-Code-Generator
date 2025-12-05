@@ -1,6 +1,8 @@
 # QR Code Generator
 
-A modern, full-featured QR code generator web application built with Next.js 14, Supabase, and Tailwind CSS.
+A modern, full-featured QR code generator web application built with Next.js 16, Supabase, and Tailwind CSS.
+
+**Live Demo:** [https://qr-code-generator-malamapl09s-projects.vercel.app](https://qr-code-generator-malamapl09s-projects.vercel.app)
 
 ## Features
 
@@ -32,7 +34,7 @@ A modern, full-featured QR code generator web application built with Next.js 14,
 
 | Component | Technology |
 |-----------|------------|
-| Framework | Next.js 14+ (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS |
 | UI Components | shadcn/ui |
