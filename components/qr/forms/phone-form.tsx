@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { phoneSchema, type PhoneFormData } from "@/lib/validations/qr";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface PhoneFormProps {
   onChange: (data: PhoneFormData | null) => void;
@@ -24,15 +24,17 @@ export function PhoneForm({ onChange }: PhoneFormProps) {
     },
   });
 
-  const formValues = watch();
+  const phone = watch("phone");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (isValid && formValues.phone) {
-      onChange(formValues);
+    if (isValid && phone) {
+      onChangeRef.current({ phone });
     } else {
-      onChange(null);
+      onChangeRef.current(null);
     }
-  }, [formValues, isValid, onChange]);
+  }, [phone, isValid]);
 
   return (
     <div className="space-y-4">

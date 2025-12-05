@@ -6,7 +6,7 @@ import { smsSchema, type SMSFormData } from "@/lib/validations/qr";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface SMSFormProps {
   onChange: (data: SMSFormData | null) => void;
@@ -26,15 +26,18 @@ export function SMSForm({ onChange }: SMSFormProps) {
     },
   });
 
-  const formValues = watch();
+  const phone = watch("phone");
+  const message = watch("message");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (isValid && formValues.phone) {
-      onChange(formValues);
+    if (isValid && phone) {
+      onChangeRef.current({ phone, message });
     } else {
-      onChange(null);
+      onChangeRef.current(null);
     }
-  }, [formValues, isValid, onChange]);
+  }, [phone, message, isValid]);
 
   return (
     <div className="space-y-4">
@@ -63,7 +66,7 @@ export function SMSForm({ onChange }: SMSFormProps) {
           <p className="text-sm text-destructive">{errors.message.message}</p>
         )}
         <p className="text-sm text-muted-foreground">
-          {formValues.message?.length || 0} / 160 characters
+          {message?.length || 0} / 160 characters
         </p>
       </div>
     </div>

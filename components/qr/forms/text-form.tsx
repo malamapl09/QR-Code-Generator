@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { textSchema, type TextFormData } from "@/lib/validations/qr";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface TextFormProps {
   onChange: (data: TextFormData | null) => void;
@@ -24,15 +24,17 @@ export function TextForm({ onChange }: TextFormProps) {
     },
   });
 
-  const formValues = watch();
+  const text = watch("text");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (isValid && formValues.text) {
-      onChange(formValues);
+    if (isValid && text) {
+      onChangeRef.current({ text });
     } else {
-      onChange(null);
+      onChangeRef.current(null);
     }
-  }, [formValues, isValid, onChange]);
+  }, [text, isValid]);
 
   return (
     <div className="space-y-4">
@@ -48,7 +50,7 @@ export function TextForm({ onChange }: TextFormProps) {
           <p className="text-sm text-destructive">{errors.text.message}</p>
         )}
         <p className="text-sm text-muted-foreground">
-          {formValues.text?.length || 0} / 4000 characters
+          {text?.length || 0} / 4000 characters
         </p>
       </div>
     </div>

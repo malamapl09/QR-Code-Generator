@@ -6,7 +6,7 @@ import { emailSchema, type EmailFormData } from "@/lib/validations/qr";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface EmailFormProps {
   onChange: (data: EmailFormData | null) => void;
@@ -27,15 +27,19 @@ export function EmailForm({ onChange }: EmailFormProps) {
     },
   });
 
-  const formValues = watch();
+  const to = watch("to");
+  const subject = watch("subject");
+  const body = watch("body");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (isValid && formValues.to) {
-      onChange(formValues);
+    if (isValid && to) {
+      onChangeRef.current({ to, subject, body });
     } else {
-      onChange(null);
+      onChangeRef.current(null);
     }
-  }, [formValues, isValid, onChange]);
+  }, [to, subject, body, isValid]);
 
   return (
     <div className="space-y-4">

@@ -31,7 +31,6 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const {
     register,
@@ -46,6 +45,7 @@ export function LoginForm() {
     setLoading(true);
 
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,

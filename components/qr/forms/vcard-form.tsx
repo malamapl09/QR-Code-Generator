@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { vcardSchema, type VCardFormData } from "@/lib/validations/qr";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface VCardFormProps {
   onChange: (data: VCardFormData | null) => void;
@@ -31,15 +31,24 @@ export function VCardForm({ onChange }: VCardFormProps) {
     },
   });
 
-  const formValues = watch();
+  const firstName = watch("firstName");
+  const lastName = watch("lastName");
+  const phone = watch("phone");
+  const email = watch("email");
+  const company = watch("company");
+  const title = watch("title");
+  const website = watch("website");
+  const address = watch("address");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (isValid && formValues.firstName) {
-      onChange(formValues);
+    if (isValid && firstName) {
+      onChangeRef.current({ firstName, lastName, phone, email, company, title, website, address });
     } else {
-      onChange(null);
+      onChangeRef.current(null);
     }
-  }, [formValues, isValid, onChange]);
+  }, [firstName, lastName, phone, email, company, title, website, address, isValid]);
 
   return (
     <div className="space-y-4">

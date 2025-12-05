@@ -39,7 +39,6 @@ export function SignupForm() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const {
     register,
@@ -54,6 +53,7 @@ export function SignupForm() {
     setLoading(true);
 
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,

@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { urlSchema, type URLFormData } from "@/lib/validations/qr";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface URLFormProps {
   onChange: (data: URLFormData | null) => void;
@@ -24,15 +24,17 @@ export function URLForm({ onChange }: URLFormProps) {
     },
   });
 
-  const formValues = watch();
+  const url = watch("url");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (isValid && formValues.url) {
-      onChange(formValues);
+    if (isValid && url) {
+      onChangeRef.current({ url });
     } else {
-      onChange(null);
+      onChangeRef.current(null);
     }
-  }, [formValues, isValid, onChange]);
+  }, [url, isValid]);
 
   return (
     <div className="space-y-4">

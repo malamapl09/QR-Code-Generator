@@ -25,7 +25,6 @@ type QRCode = Database["public"]["Tables"]["qr_codes"]["Row"];
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const supabase = createClient();
 
   const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +34,7 @@ export default function DashboardPage() {
     if (!user) return;
 
     const fetchQRCodes = async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("qr_codes")
         .select("*")
@@ -52,11 +52,12 @@ export default function DashboardPage() {
     };
 
     fetchQRCodes();
-  }, [user, supabase]);
+  }, [user]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
 
+    const supabase = createClient();
     // Soft delete
     const { error } = await supabase
       .from("qr_codes")

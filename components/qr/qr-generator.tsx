@@ -55,7 +55,6 @@ const QR_TYPES = [
 export function QRGenerator() {
   const router = useRouter();
   const { user } = useAuth();
-  const supabase = createClient();
 
   const [activeType, setActiveType] = useState<QRType>("url");
   const [formData, setFormData] = useState<Record<QRType, unknown>>({
@@ -117,6 +116,7 @@ export function QRGenerator() {
     setSaving(true);
 
     try {
+      const supabase = createClient();
       const shortCode = isDynamic ? generateShortCode() : null;
 
       // For dynamic QRs, we need to determine the destination URL

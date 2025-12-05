@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface WiFiFormProps {
   onChange: (data: WiFiFormData | null) => void;
@@ -35,15 +35,20 @@ export function WiFiForm({ onChange }: WiFiFormProps) {
     },
   });
 
-  const formValues = watch();
+  const ssid = watch("ssid");
+  const password = watch("password");
+  const encryption = watch("encryption");
+  const hidden = watch("hidden");
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (isValid && formValues.ssid) {
-      onChange(formValues);
+    if (isValid && ssid) {
+      onChangeRef.current({ ssid, password, encryption, hidden });
     } else {
-      onChange(null);
+      onChangeRef.current(null);
     }
-  }, [formValues, isValid, onChange]);
+  }, [ssid, password, encryption, hidden, isValid]);
 
   return (
     <div className="space-y-4">
@@ -62,7 +67,7 @@ export function WiFiForm({ onChange }: WiFiFormProps) {
       <div className="space-y-2">
         <Label htmlFor="encryption">Security Type</Label>
         <Select
-          value={formValues.encryption}
+          value={encryption}
           onValueChange={(value) =>
             setValue("encryption", value as "WPA" | "WEP" | "nopass")
           }
@@ -78,7 +83,7 @@ export function WiFiForm({ onChange }: WiFiFormProps) {
         </Select>
       </div>
 
-      {formValues.encryption !== "nopass" && (
+      {encryption !== "nopass" && (
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <Input

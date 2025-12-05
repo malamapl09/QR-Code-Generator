@@ -48,7 +48,6 @@ export default function QRDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuth();
-  const supabase = createClient();
 
   const [qrCode, setQrCode] = useState<QRCode | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
@@ -65,6 +64,7 @@ export default function QRDetailPage({ params }: PageProps) {
     if (!user) return;
 
     const fetchData = async () => {
+      const supabase = createClient();
       // Fetch QR code
       const { data: qr, error: qrError } = await supabase
         .from("qr_codes")
@@ -110,7 +110,7 @@ export default function QRDetailPage({ params }: PageProps) {
     };
 
     fetchData();
-  }, [user, id, supabase, router]);
+  }, [user, id, router]);
 
   // Calculate analytics from scans
   const calculateStats = () => {
@@ -187,6 +187,7 @@ export default function QRDetailPage({ params }: PageProps) {
     setSaving(true);
 
     try {
+      const supabase = createClient();
       const { error } = await supabase
         .from("qr_codes")
         .update({
