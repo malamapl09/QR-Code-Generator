@@ -79,7 +79,7 @@ export function QRDownload({
           size="lg"
         >
           <Save className="mr-2 h-4 w-4" />
-          Save to Account
+          Save Locally
         </Button>
       )}
 

@@ -26,9 +26,7 @@ import { EmailForm } from "./forms/email-form";
 import { PhoneForm } from "./forms/phone-form";
 import { SMSForm } from "./forms/sms-form";
 import { encodeQRContent } from "@/lib/qr/encoder";
-import { generateShortCode } from "@/lib/qr/shortcode";
-import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { saveQRCode } from "@/lib/storage/qr-storage";
 import { toast } from "sonner";
 import {
   Link2,
@@ -54,7 +52,6 @@ const QR_TYPES = [
 
 export function QRGenerator() {
   const router = useRouter();
-  const { user } = useAuth();
 
   const [activeType, setActiveType] = useState<QRType>("url");
   const [formData, setFormData] = useState<Record<QRType, unknown>>({
@@ -78,7 +75,6 @@ export function QRGenerator() {
   // Save dialog state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveName, setSaveName] = useState("");
-  const [isDynamic, setIsDynamic] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Get the encoded content for the current form
@@ -102,56 +98,32 @@ export function QRGenerator() {
 
   // Handle save
   const handleSaveClick = () => {
-    if (!user) {
-      // Redirect to login
-      router.push("/login?next=/");
-      return;
-    }
     setShowSaveDialog(true);
   };
 
   const handleSave = async () => {
-    if (!user || !encodedContent || !currentFormData) return;
+    if (!encodedContent) return;
 
     setSaving(true);
 
     try {
-      const supabase = createClient();
-      const shortCode = isDynamic ? generateShortCode() : null;
-
-      // For dynamic QRs, we need to determine the destination URL
-      let destinationUrl: string | null = null;
-      if (isDynamic && activeType === "url") {
-        destinationUrl = encodedContent;
-      }
-
-      const { error } = await supabase.from("qr_codes").insert({
-        user_id: user.id,
+      saveQRCode({
         name: saveName || `${activeType.toUpperCase()} QR Code`,
         type: activeType,
         content: encodedContent,
-        destination_url: destinationUrl,
-        is_dynamic: isDynamic,
-        short_code: shortCode,
-        foreground_color: foregroundColor,
-        background_color: backgroundColor,
+        foregroundColor,
+        backgroundColor,
         size,
-        error_correction: "M",
+        errorCorrection: "M",
       });
-
-      if (error) {
-        throw error;
-      }
 
       toast.success("QR code saved successfully");
       setShowSaveDialog(false);
       setSaveName("");
-      setIsDynamic(false);
 
       // Redirect to dashboard
       router.push("/dashboard");
-    } catch (error) {
-      console.error("Failed to save QR code:", error);
+    } catch {
       toast.error("Failed to save QR code");
     } finally {
       setSaving(false);
@@ -256,7 +228,7 @@ export function QRGenerator() {
           <DialogHeader>
             <DialogTitle>Save QR Code</DialogTitle>
             <DialogDescription>
-              Save this QR code to your account for easy access and management.
+              Save this QR code locally for easy access later.
             </DialogDescription>
           </DialogHeader>
 
@@ -271,28 +243,6 @@ export function QRGenerator() {
                 className="h-11"
               />
             </div>
-
-            {activeType === "url" && (
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="dynamic"
-                  checked={isDynamic}
-                  onChange={(e) => setIsDynamic(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="dynamic" className="font-normal">
-                  Make this a dynamic QR code
-                </Label>
-              </div>
-            )}
-
-            {isDynamic && (
-              <p className="text-sm text-muted-foreground">
-                Dynamic QR codes let you change the destination URL later
-                without reprinting the code. You&apos;ll also get scan analytics.
-              </p>
-            )}
           </div>
 
           <DialogFooter>

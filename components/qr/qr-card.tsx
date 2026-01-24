@@ -14,22 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  MoreHorizontal,
-  BarChart3,
-  Download,
-  Trash2,
-  ExternalLink,
-  Copy,
-} from "lucide-react";
+import { MoreHorizontal, Eye, Download, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import type { Database } from "@/types/database";
-
-type QRCode = Database["public"]["Tables"]["qr_codes"]["Row"];
+import type { StoredQRCode } from "@/lib/storage/qr-storage";
 
 interface QRCardProps {
-  qrCode: QRCode;
+  qrCode: StoredQRCode;
   onDelete?: (id: string) => void;
 }
 
@@ -43,25 +34,18 @@ export function QRCard({ qrCode, onDelete }: QRCardProps) {
         const result = await generateQRCode({
           content: qrCode.content,
           size: 150,
-          foregroundColor: qrCode.foreground_color,
-          backgroundColor: qrCode.background_color,
+          foregroundColor: qrCode.foregroundColor,
+          backgroundColor: qrCode.backgroundColor,
         });
         setPreview(result.png);
       } catch {
-        console.error("Failed to generate preview");
+        // Silently fail - fallback UI will be shown
       } finally {
         setLoading(false);
       }
     };
     generate();
   }, [qrCode]);
-
-  const copyShortUrl = async () => {
-    if (!qrCode.short_code) return;
-    const url = `${window.location.origin}/q/${qrCode.short_code}`;
-    await navigator.clipboard.writeText(url);
-    toast.success("Short URL copied to clipboard");
-  };
 
   const handleDownload = async () => {
     if (!preview) return;
@@ -102,15 +86,10 @@ export function QRCard({ qrCode, onDelete }: QRCardProps) {
                   {qrCode.name || "Untitled"}
                 </h3>
               </Link>
-              <div className="mt-1 flex items-center gap-2">
+              <div className="mt-1">
                 <Badge variant="secondary" className="text-xs">
                   {qrCode.type.toUpperCase()}
                 </Badge>
-                {qrCode.is_dynamic && (
-                  <Badge variant="default" className="text-xs">
-                    Dynamic
-                  </Badge>
-                )}
               </div>
             </div>
 
@@ -123,7 +102,7 @@ export function QRCard({ qrCode, onDelete }: QRCardProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
                   <Link href={`/dashboard/${qrCode.id}`}>
-                    <BarChart3 className="mr-2 h-4 w-4" />
+                    <Eye className="mr-2 h-4 w-4" />
                     View Details
                   </Link>
                 </DropdownMenuItem>
@@ -131,24 +110,6 @@ export function QRCard({ qrCode, onDelete }: QRCardProps) {
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
-                {qrCode.is_dynamic && qrCode.short_code && (
-                  <>
-                    <DropdownMenuItem onClick={copyShortUrl}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy Short URL
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <a
-                        href={qrCode.destination_url || "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Open Destination
-                      </a>
-                    </DropdownMenuItem>
-                  </>
-                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
@@ -164,15 +125,10 @@ export function QRCard({ qrCode, onDelete }: QRCardProps) {
       </CardContent>
 
       <CardFooter className="border-t bg-muted/50 px-4 py-3">
-        <div className="flex w-full items-center justify-between text-sm text-muted-foreground">
-          <span>
-            {qrCode.total_scans} scan{qrCode.total_scans !== 1 ? "s" : ""}
-          </span>
-          <span>
-            {formatDistanceToNow(new Date(qrCode.created_at), {
-              addSuffix: true,
-            })}
-          </span>
+        <div className="w-full text-sm text-muted-foreground">
+          {formatDistanceToNow(new Date(qrCode.createdAt), {
+            addSuffix: true,
+          })}
         </div>
       </CardFooter>
     </Card>

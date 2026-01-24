@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useAuth } from "@/hooks/use-auth";
 
 declare global {
   interface Window {
@@ -14,14 +13,10 @@ interface AdBannerProps {
 }
 
 export function AdBanner({ className }: AdBannerProps) {
-  const { user, loading } = useAuth();
   const adRef = useRef<HTMLModElement>(null);
   const isAdLoaded = useRef(false);
 
   useEffect(() => {
-    // Don't show ads if user is logged in or still loading
-    if (loading || user) return;
-
     // Don't load if no AdSense ID configured
     if (!process.env.NEXT_PUBLIC_ADSENSE_ID) return;
 
@@ -36,12 +31,7 @@ export function AdBanner({ className }: AdBannerProps) {
     } catch (error) {
       console.error("AdSense error:", error);
     }
-  }, [user, loading]);
-
-  // Don't render anything if user is logged in
-  if (loading || user) {
-    return null;
-  }
+  }, []);
 
   // Don't render if no AdSense ID
   if (!process.env.NEXT_PUBLIC_ADSENSE_ID) {

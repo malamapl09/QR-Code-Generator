@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import Script from "next/script";
-import { AuthProvider } from "@/components/auth/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -21,21 +20,18 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://qr-code-generator-ma
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Free QR Code Generator - Create & Track QR Codes",
+    default: "Free QR Code Generator - Create Custom QR Codes",
     template: "%s | QR Code Generator",
   },
   description:
-    "Generate free QR codes for URLs, WiFi, contacts, email, phone & more. Customize colors, download PNG/SVG, and track scans with detailed analytics.",
+    "Generate free QR codes for URLs, WiFi, contacts, email, phone & more. Customize colors and download PNG/SVG instantly.",
   keywords: [
     "QR code generator",
     "free QR code",
-    "dynamic QR code",
-    "QR code analytics",
     "WiFi QR code",
     "vCard QR code",
     "QR code maker",
     "create QR code online",
-    "QR code tracking",
   ],
   authors: [{ name: "QR Code Generator" }],
   creator: "QR Code Generator",
@@ -44,15 +40,15 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "QR Code Generator",
-    title: "Free QR Code Generator - Create & Track QR Codes",
+    title: "Free QR Code Generator - Create Custom QR Codes",
     description:
-      "Generate free QR codes for URLs, WiFi, contacts & more. Customize colors, download PNG/SVG, and track scans with analytics.",
+      "Generate free QR codes for URLs, WiFi, contacts & more. Customize colors and download PNG/SVG instantly.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Free QR Code Generator",
     description:
-      "Generate free QR codes for URLs, WiFi, contacts & more. Track scans with detailed analytics.",
+      "Generate free QR codes for URLs, WiFi, contacts & more. Customize colors and download instantly.",
   },
   robots: {
     index: true,
@@ -77,10 +73,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          {children}
-          <Toaster />
-        </AuthProvider>
+        {children}
+        <Toaster />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />

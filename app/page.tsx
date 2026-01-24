@@ -19,14 +19,13 @@ export default function HomePage() {
               Free QR Code Generator
             </h1>
             <p className="mt-2 text-lg text-muted-foreground">
-              Create QR codes for URLs, WiFi, contacts, and more. Download for
-              free or save to your account for tracking and management.
+              Create QR codes for URLs, WiFi, contacts, and more. Customize colors
+              and download for free. Save locally to manage your QR codes.
             </p>
           </div>
 
           <QRGenerator />
 
-          {/* Ad Banner - Only shown to non-authenticated users */}
           <AdBanner className="my-8" />
 
           {/* Features Section */}
@@ -68,13 +67,13 @@ export default function HomePage() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"
+                    d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.39m3.42 3.415a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.764m3.42 3.415a6.776 6.776 0 00-3.42-3.415"
                   />
                 </svg>
               </div>
-              <h3 className="font-semibold">Track Scans</h3>
+              <h3 className="font-semibold">Custom Colors</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Create dynamic QR codes and track scans with detailed analytics.
+                Customize your QR codes with your brand colors for a unique look.
               </p>
             </div>
 
@@ -91,13 +90,13 @@ export default function HomePage() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                    d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
                   />
                 </svg>
               </div>
-              <h3 className="font-semibold">Dynamic QR Codes</h3>
+              <h3 className="font-semibold">Local Storage</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Change destination URLs anytime without reprinting your QR codes.
+                Save your QR codes locally for easy access and management later.
               </p>
             </div>
           </section>

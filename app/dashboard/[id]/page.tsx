@@ -3,13 +3,12 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { generateQRCode } from "@/lib/qr/generator";
-import { downloadQRCode } from "@/lib/qr/generator";
-import { StatsOverview } from "@/components/analytics/stats-overview";
-import { ScansChart } from "@/components/analytics/scans-chart";
-import { DeviceBreakdown } from "@/components/analytics/device-breakdown";
+import {
+  getQRCodeById,
+  updateQRCode,
+  type StoredQRCode,
+} from "@/lib/storage/qr-storage";
+import { generateQRCode, downloadQRCode } from "@/lib/qr/generator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,21 +23,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  ArrowLeft,
-  Download,
-  ExternalLink,
-  Copy,
-  Pencil,
-  Loader2,
-} from "lucide-react";
+import { ArrowLeft, Download, Pencil, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { format, subDays, startOfDay, startOfWeek, isToday } from "date-fns";
-import type { Database } from "@/types/database";
+import { format } from "date-fns";
 import type { GeneratedQR } from "@/types/qr";
-
-type QRCode = Database["public"]["Tables"]["qr_codes"]["Row"];
-type Scan = Database["public"]["Tables"]["scans"]["Row"];
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -47,166 +35,67 @@ interface PageProps {
 export default function QRDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { user } = useAuth();
 
-  const [qrCode, setQrCode] = useState<QRCode | null>(null);
-  const [scans, setScans] = useState<Scan[]>([]);
+  const [qrCode, setQrCode] = useState<StoredQRCode | null>(null);
   const [loading, setLoading] = useState(true);
   const [generatedQR, setGeneratedQR] = useState<GeneratedQR | null>(null);
 
   // Edit dialog state
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editName, setEditName] = useState("");
-  const [editDestination, setEditDestination] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    const qr = getQRCodeById(id);
+    if (!qr) {
+      toast.error("QR code not found");
+      router.push("/dashboard");
+      return;
+    }
 
-    const fetchData = async () => {
-      const supabase = createClient();
-      // Fetch QR code
-      const { data: qr, error: qrError } = await supabase
-        .from("qr_codes")
-        .select("*")
-        .eq("id", id)
-        .eq("user_id", user.id)
-        .single();
+    setQrCode(qr);
+    setEditName(qr.name || "");
 
-      if (qrError || !qr) {
-        toast.error("QR code not found");
-        router.push("/dashboard");
-        return;
-      }
-
-      setQrCode(qr);
-      setEditName(qr.name || "");
-      setEditDestination(qr.destination_url || "");
-
-      // Generate preview
+    // Generate preview
+    const generatePreview = async () => {
       try {
         const generated = await generateQRCode({
-          content: qr.is_dynamic
-            ? `${window.location.origin}/q/${qr.short_code}`
-            : qr.content,
+          content: qr.content,
           size: 300,
-          foregroundColor: qr.foreground_color,
-          backgroundColor: qr.background_color,
+          foregroundColor: qr.foregroundColor,
+          backgroundColor: qr.backgroundColor,
         });
         setGeneratedQR(generated);
-      } catch (error) {
-        console.error("Failed to generate QR:", error);
+      } catch {
+        // Silently fail - page will show without QR preview
       }
-
-      // Fetch scans for this QR code
-      const { data: scanData } = await supabase
-        .from("scans")
-        .select("*")
-        .eq("qr_code_id", id)
-        .order("scanned_at", { ascending: false });
-
-      setScans(scanData || []);
       setLoading(false);
     };
 
-    fetchData();
-  }, [user, id, router]);
+    generatePreview();
+  }, [id, router]);
 
-  // Calculate analytics from scans
-  const calculateStats = () => {
-    const today = startOfDay(new Date());
-    const weekStart = startOfWeek(new Date());
-
-    const scansToday = scans.filter((s) =>
-      isToday(new Date(s.scanned_at))
-    ).length;
-
-    const scansThisWeek = scans.filter(
-      (s) => new Date(s.scanned_at) >= weekStart
-    ).length;
-
-    return {
-      totalScans: qrCode?.total_scans || 0,
-      uniqueScans: qrCode?.unique_scans || 0,
-      scansToday,
-      scansThisWeek,
-    };
-  };
-
-  // Calculate daily chart data
-  const getDailyData = () => {
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const date = subDays(new Date(), 29 - i);
-      return format(date, "yyyy-MM-dd");
-    });
-
-    const dailyCounts = last30Days.map((date) => {
-      const dayScans = scans.filter(
-        (s) => format(new Date(s.scanned_at), "yyyy-MM-dd") === date
-      );
-      return {
-        date,
-        totalScans: dayScans.length,
-        uniqueScans: dayScans.filter((s) => s.is_unique).length,
-      };
-    });
-
-    return dailyCounts;
-  };
-
-  // Calculate device breakdown
-  const getDeviceData = () => {
-    const deviceCounts: Record<string, number> = {};
-    scans.forEach((scan) => {
-      const device = scan.device_type || "unknown";
-      deviceCounts[device] = (deviceCounts[device] || 0) + 1;
-    });
-
-    return Object.entries(deviceCounts).map(([deviceType, count]) => ({
-      deviceType,
-      count,
-    }));
-  };
-
-  const handleCopyShortUrl = async () => {
-    if (!qrCode?.short_code) return;
-    const url = `${window.location.origin}/q/${qrCode.short_code}`;
-    await navigator.clipboard.writeText(url);
-    toast.success("Short URL copied to clipboard");
-  };
-
-  const handleDownload = (format: "png" | "svg") => {
+  const handleDownload = (fmt: "png" | "svg") => {
     if (!generatedQR) return;
-    const data = format === "png" ? generatedQR.png : generatedQR.svg;
-    downloadQRCode(data, qrCode?.name || "qrcode", format);
-    toast.success(`Downloaded as ${format.toUpperCase()}`);
+    const data = fmt === "png" ? generatedQR.png : generatedQR.svg;
+    downloadQRCode(data, qrCode?.name || "qrcode", fmt);
+    toast.success(`Downloaded as ${fmt.toUpperCase()}`);
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = () => {
     if (!qrCode) return;
     setSaving(true);
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("qr_codes")
-        .update({
-          name: editName,
-          destination_url: qrCode.is_dynamic ? editDestination : undefined,
-        })
-        .eq("id", qrCode.id);
-
-      if (error) throw error;
-
-      setQrCode({
-        ...qrCode,
-        name: editName,
-        destination_url: editDestination,
-      });
-      setShowEditDialog(false);
-      toast.success("QR code updated");
-    } catch (error) {
-      console.error("Failed to update:", error);
+      const updated = updateQRCode(qrCode.id, { name: editName });
+      if (updated) {
+        setQrCode(updated);
+        setShowEditDialog(false);
+        toast.success("QR code updated");
+      } else {
+        throw new Error("Update failed");
+      }
+    } catch {
       toast.error("Failed to update QR code");
     } finally {
       setSaving(false);
@@ -215,14 +104,11 @@ export default function QRDetailPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <Skeleton className="h-8 w-48" />
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="h-[200px]" />
-            <Skeleton className="h-[350px]" />
-          </div>
+        <div className="grid gap-6 md:grid-cols-2">
           <Skeleton className="h-[400px]" />
+          <Skeleton className="h-[200px]" />
         </div>
       </div>
     );
@@ -230,10 +116,8 @@ export default function QRDetailPage({ params }: PageProps) {
 
   if (!qrCode) return null;
 
-  const stats = calculateStats();
-
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -248,7 +132,6 @@ export default function QRDetailPage({ params }: PageProps) {
             </h1>
             <div className="mt-1 flex items-center gap-2">
               <Badge variant="secondary">{qrCode.type.toUpperCase()}</Badge>
-              {qrCode.is_dynamic && <Badge>Dynamic</Badge>}
             </div>
           </div>
         </div>
@@ -258,121 +141,83 @@ export default function QRDetailPage({ params }: PageProps) {
         </Button>
       </div>
 
-      {/* Stats Overview */}
-      <StatsOverview {...stats} />
-
       {/* Main Content */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Charts */}
-        <div className="space-y-6 lg:col-span-2">
-          <ScansChart data={getDailyData()} />
-          <DeviceBreakdown data={getDeviceData()} />
-        </div>
-
+      <div className="grid gap-6 md:grid-cols-2">
         {/* QR Code Preview & Actions */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>QR Code</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              {generatedQR && (
-                <img
-                  src={generatedQR.png}
-                  alt="QR Code"
-                  className="mb-4 rounded-lg"
-                  style={{ width: 200, height: 200 }}
+        <Card>
+          <CardHeader>
+            <CardTitle>QR Code</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center">
+            {generatedQR && (
+              <img
+                src={generatedQR.png}
+                alt="QR Code"
+                className="mb-4 rounded-lg"
+                style={{ width: 250, height: 250 }}
+              />
+            )}
+
+            <div className="flex w-full gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => handleDownload("png")}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                PNG
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => handleDownload("svg")}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                SVG
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Details Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Created</span>
+              <span>{format(new Date(qrCode.createdAt), "MMM d, yyyy")}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Last Updated</span>
+              <span>{format(new Date(qrCode.updatedAt), "MMM d, yyyy")}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Type</span>
+              <span className="capitalize">{qrCode.type}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Size</span>
+              <span>{qrCode.size}px</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Colors</span>
+              <div className="flex gap-2">
+                <div
+                  className="h-5 w-5 rounded border"
+                  style={{ backgroundColor: qrCode.foregroundColor }}
+                  title={`Foreground: ${qrCode.foregroundColor}`}
                 />
-              )}
-
-              <div className="flex w-full flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleDownload("png")}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  PNG
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleDownload("svg")}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  SVG
-                </Button>
+                <div
+                  className="h-5 w-5 rounded border"
+                  style={{ backgroundColor: qrCode.backgroundColor }}
+                  title={`Background: ${qrCode.backgroundColor}`}
+                />
               </div>
-
-              {qrCode.is_dynamic && qrCode.short_code && (
-                <div className="mt-4 w-full">
-                  <Label className="text-xs text-muted-foreground">
-                    Short URL
-                  </Label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Input
-                      value={`${typeof window !== "undefined" ? window.location.origin : ""}/q/${qrCode.short_code}`}
-                      readOnly
-                      className="text-xs"
-                    />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleCopyShortUrl}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {qrCode.destination_url && (
-                <div className="mt-4 w-full">
-                  <Label className="text-xs text-muted-foreground">
-                    Destination
-                  </Label>
-                  <a
-                    href={qrCode.destination_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 flex items-center gap-2 text-sm text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    {qrCode.destination_url}
-                  </a>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Created</span>
-                <span>
-                  {format(new Date(qrCode.created_at), "MMM d, yyyy")}
-                </span>
-              </div>
-              {qrCode.last_scanned_at && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Scanned</span>
-                  <span>
-                    {format(new Date(qrCode.last_scanned_at), "MMM d, yyyy")}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Type</span>
-                <span className="capitalize">{qrCode.type}</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Edit Dialog */}
@@ -381,7 +226,7 @@ export default function QRDetailPage({ params }: PageProps) {
           <DialogHeader>
             <DialogTitle>Edit QR Code</DialogTitle>
             <DialogDescription>
-              Update the name and destination of your QR code.
+              Update the name of your QR code.
             </DialogDescription>
           </DialogHeader>
 
@@ -395,21 +240,6 @@ export default function QRDetailPage({ params }: PageProps) {
                 placeholder="My QR Code"
               />
             </div>
-
-            {qrCode.is_dynamic && (
-              <div className="space-y-2">
-                <Label htmlFor="edit-destination">Destination URL</Label>
-                <Input
-                  id="edit-destination"
-                  value={editDestination}
-                  onChange={(e) => setEditDestination(e.target.value)}
-                  placeholder="https://example.com"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Change where this QR code redirects to.
-                </p>
-              </div>
-            )}
           </div>
 
           <DialogFooter>

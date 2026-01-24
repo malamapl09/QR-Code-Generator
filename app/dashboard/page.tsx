@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import {
+  getQRCodes,
+  deleteQRCode,
+  type StoredQRCode,
+} from "@/lib/storage/qr-storage";
 import { QRCard } from "@/components/qr/qr-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,56 +22,27 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, QrCode } from "lucide-react";
 import { toast } from "sonner";
-import type { Database } from "@/types/database";
-
-type QRCode = Database["public"]["Tables"]["qr_codes"]["Row"];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-
-  const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
+  const [qrCodes, setQrCodes] = useState<StoredQRCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    const codes = getQRCodes();
+    setQrCodes(codes);
+    setLoading(false);
+  }, []);
 
-    const fetchQRCodes = async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("qr_codes")
-        .select("*")
-        .eq("user_id", user.id)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Failed to fetch QR codes:", error);
-        toast.error("Failed to load QR codes");
-      } else {
-        setQrCodes(data || []);
-      }
-      setLoading(false);
-    };
-
-    fetchQRCodes();
-  }, [user]);
-
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!deleteId) return;
 
-    const supabase = createClient();
-    // Soft delete
-    const { error } = await supabase
-      .from("qr_codes")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", deleteId);
-
-    if (error) {
-      toast.error("Failed to delete QR code");
-    } else {
+    const success = deleteQRCode(deleteId);
+    if (success) {
       setQrCodes((prev) => prev.filter((qr) => qr.id !== deleteId));
       toast.success("QR code deleted");
+    } else {
+      toast.error("Failed to delete QR code");
     }
     setDeleteId(null);
   };
@@ -95,7 +69,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold">My QR Codes</h1>
           <p className="mt-1 text-muted-foreground">
-            Manage and track your QR codes
+            Your locally saved QR codes
           </p>
         </div>
         <Link href="/">
@@ -138,8 +112,8 @@ export default function DashboardPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete QR Code?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The QR code will stop working if it
-              was a dynamic code.
+              This action cannot be undone. The QR code will be permanently
+              deleted from your browser.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
